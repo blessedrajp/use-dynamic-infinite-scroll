@@ -1,6 +1,6 @@
 {
   "name": "use-dynamic-infinite-scroll",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "",
   "main": "./dist/useDynamicInfiniteScroll.js",
   "types": "./dist/useDynamicInfiniteScroll.d.ts",
@@ -16,7 +16,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "react": "^19.1.0"
   },
