@@ -140,7 +140,7 @@ If you'd like to contribute:
 2. Clone your fork:
 
 ```bash 
-git clone https://github.com/your-username/use-dynamic-infinite-scroll.git
+git clone https://github.com/blessedrajp/use-dynamic-infinite-scroll.git
 ```
 3. Create a new branch and commit your changes.
 
@@ -162,7 +162,7 @@ If you have any issues or questions, feel free to open an issue on the GitHub Is
 ## 🔗 Quick Links
 
 - 📦 [NPM Package](https://www.npmjs.com/package/use-dynamic-infinite-scroll)
-- 🐞 [Open Issues](https://github.com/your-username/use-dynamic-infinite-scroll/issues)
+- 🐞 [Open Issues](https://github.com/blessedrajp/use-dynamic-infinite-scroll/issues)
 
 
 ### Steps to Follow:
@@ -174,15 +174,7 @@ Let me know if you'd like any further changes!
 
 # Happy Coding! 🚀
 
-```yaml
 
-
-✅ Fully markdown-formatted  
-✅ Clean headers, sections, code blocks  
-✅ Consistent emojis for readability  
-✅ Ready to paste into your `README.md` as a single complete file  
-
-```
 
 
 

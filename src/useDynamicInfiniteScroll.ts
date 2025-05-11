@@ -5,52 +5,62 @@ type FetchFunction<T, P> = (page: number, params: P) => Promise<{ data: T[]; has
 function useDynamicInfiniteScroll<T, P extends Record<string, unknown>>(
   fetchFunction: FetchFunction<T, P>,
   initialParams: P,
-  initialPage: number = 1
+  initialPage: number = 0
 ) {
   const [data, setData] = useState<T[]>([]);
   const [page, setPage] = useState(initialPage);
-  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [scrollLoading, setScrollLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [params, setParams] = useState<P>(initialParams);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
-
   const loaderRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Main fetch function
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
+    if (scrollLoading || !hasMore) return;
 
-    setLoading(true);
+    setScrollLoading(true);
     try {
       const result = await fetchFunction(page, params);
-      setData(prev => (page === initialPage ? result.data : [...prev, ...result.data]))
+      setData(prev => (page === initialPage ? result.data : [...prev, ...result.data]));
       setHasMore(result.hasMore);
-      if (result.hasMore) {
-        setPage(prev => prev + 1);
-      }
+      if (result.hasMore) setPage(prev => prev + 1);
     } catch (error) {
       console.error('Infinite scroll fetch failed:', error);
       setHasMore(false);
     } finally {
-      setLoading(false);
-      if (isFirstLoad) setIsFirstLoad(false);
+      setScrollLoading(false);
     }
-  }, [fetchFunction, page, loading, hasMore, params, initialPage, isFirstLoad]);
+  }, [fetchFunction, page, params, hasMore, scrollLoading, initialPage]);
 
-  // Initialize observer and handle loading more
+  const fetchInitialData = useCallback(async () => {
+    setInitialLoading(true);
+    try {
+      const result = await fetchFunction(initialPage, params);
+      setData(result.data);
+      setHasMore(result.hasMore);
+      setPage(initialPage + 1);
+    } catch (error) {
+      console.error('Initial fetch failed:', error);
+      setHasMore(false);
+    } finally {
+      setInitialLoading(false);
+    }
+  }, [fetchFunction, initialPage, params]);
+
   useEffect(() => {
-    if (isFirstLoad) {
-      loadMore();
-      return;
-    }
+    fetchInitialData();
+  }, [fetchInitialData]);
 
+  useEffect(() => {
     if (!loaderRef.current || !hasMore) return;
+
+    if (observerRef.current) observerRef.current.disconnect();
 
     const observer = new IntersectionObserver(
       (entries) => {
         const firstEntry = entries[0];
-        if (firstEntry.isIntersecting && !loading) {
+        if (firstEntry.isIntersecting && !scrollLoading) {
           loadMore();
         }
       },
@@ -63,33 +73,28 @@ function useDynamicInfiniteScroll<T, P extends Record<string, unknown>>(
     return () => {
       observer.disconnect();
     };
-  }, [loadMore, hasMore, loading, isFirstLoad]);
+  }, [loadMore, hasMore, scrollLoading]);
 
-  // Reset when params change
-  useEffect(() => {
-    setData([]);
-    setPage(initialPage);
-    setHasMore(true);
-    setIsFirstLoad(true);
-  }, [params, initialPage]);
-
-  // Function to update params and trigger refresh
   const updateParams = useCallback((newParams: Partial<P>) => {
     setParams(prev => ({ ...prev, ...newParams }));
   }, []);
 
-  return { 
-    data, 
-    loading, 
-    hasMore, 
-    updateParams, 
+  const reset = useCallback(() => {
+    setData([]);
+    setPage(initialPage);
+    setHasMore(true);
+    setParams(initialParams);
+    setInitialLoading(true);
+  }, [initialPage, initialParams]);
+
+  return {
+    data,
+    initialLoading,
+    scrollLoading,
+    hasMore,
+    updateParams,
     loaderRef,
-    reset: () => {
-      setData([]);
-      setPage(initialPage);
-      setHasMore(true);
-      setIsFirstLoad(true);
-    }
+    reset,
   };
 }
 
