@@ -33,10 +33,10 @@ function useDynamicInfiniteScroll<T, P extends Record<string, unknown>>(
     }
   }, [fetchFunction, page, params, hasMore, scrollLoading, initialPage]);
 
-  const fetchInitialData = useCallback(async () => {
+  const fetchInitialData = useCallback(async (currentParams: P) => {
     setInitialLoading(true);
     try {
-      const result = await fetchFunction(initialPage, params);
+      const result = await fetchFunction(initialPage, currentParams);
       setData(result.data);
       setHasMore(result.hasMore);
       setPage(initialPage + 1);
@@ -49,8 +49,8 @@ function useDynamicInfiniteScroll<T, P extends Record<string, unknown>>(
   }, [fetchFunction, initialPage, params]);
 
   useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
+    fetchInitialData(params);
+  }, []);
 
   useEffect(() => {
     if (!loaderRef.current || !hasMore) return;
@@ -75,9 +75,18 @@ function useDynamicInfiniteScroll<T, P extends Record<string, unknown>>(
     };
   }, [loadMore, hasMore, scrollLoading]);
 
-  const updateParams = useCallback((newParams: Partial<P>) => {
-    setParams(prev => ({ ...prev, ...newParams }));
-  }, []);
+   const updateParams = ((newParams: Partial<P>) => {
+    setParams(prev => {
+      const updatedParams = { ...prev, ...newParams };
+      // Reset and fetch with new params
+      setData([]);
+      setPage(initialPage);
+      setInitialLoading(true);
+      setHasMore(true);
+      fetchInitialData(updatedParams);
+      return updatedParams;
+    });
+  });
 
   const reset = useCallback(() => {
     setData([]);
@@ -99,3 +108,5 @@ function useDynamicInfiniteScroll<T, P extends Record<string, unknown>>(
 }
 
 export default useDynamicInfiniteScroll;
+
+ 

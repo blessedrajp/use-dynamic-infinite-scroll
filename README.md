@@ -41,27 +41,30 @@ import useDynamicInfiniteScroll from 'use-dynamic-infinite-scroll';
     hasMore: Boolean indicating if more data exists.
   ```ts 
 
-  const fetchCustomData = async (
-    page: number,
-    param1: string,
-    param2?: string,
-    param3?: string
-  ): Promise<{ data: YourDataType[]; hasMore: boolean }> => {
-    const response = await YourApi.getCustomData(
-      page.toString(),
-      param1,
-      param2,
-      param3
-    );
+  const fetchReports = async (page: number, params: any) => {
+    try{
+    const response: any = await apigetData(
+    page.toString(),
+    pageSize,
+    params.year
+  );
+  const reports: Report[] = response.data;
+  const hasMore = response.hasNext;
 
-    return {
-      data: response.data,
-      hasMore: response.hasNext
-    };
-  };
+  return { data: reports, hasMore };
+    } catch(error){console.log("error fetching the data")}
+ 
+} 
+```
 
+3. place your dynamuc get method in your services file
 
-  ```
+```ts
+  export const apigetData = (page: number, search: string, year: string): Promise<AxiosResponse<MyResponseType>> => {
+    return axios.get(`/url?page=${page}&search=${search}&year=${year}`);
+}
+
+```
 
 3. Implement in your component
 
@@ -72,33 +75,42 @@ function ProductList() {
     [param1, param2, param3]
   );
 
-  const { data, loading, loaderRef, setParams } = useDynamicInfiniteScroll(fetchData);
+const { data, scrollLoading,initialLoading, hasMore, loaderRef, updateParams } = useDynamicInfiniteScroll(
+    fetchReports,
+    0
+  );
 
   const handleFilter = (params1: string, params2: string) => {
     setParams({ params1: params1, params2: params2 });
   };
 
-  return (
-    <TableBody>
-      {data.map((item, index) => (
-        <TableRow key={index}>
-          <TableCell>{item.name}</TableCell>
-          {/* Add other cells as needed */}
-        </TableRow>
-      ))}
+   return (
+    <div>
+      {/* Initial Loading */}
+      {initialLoading ? (
+        <div>Loading data...</div>
+      ) : (
+        <>
+          {/* Actual data mapping */}
+          {data.map((item, index) => (
+            <div key={index}>
+              {item.title}
 
-      <TableRow>
-        <TableCell colSpan={5}>
-          <div ref={loaderRef}></div>
-          {loading && (
-            <Box display="flex" alignItems="center">
-              <CircularProgress size={20} />
-              <span>Loading more data...</span>
-            </Box>
+              {/* loaderRef at last element */}
+              {index === data.length - 1 && <div ref={loaderRef}></div>}
+            </div>
+          ))}
+
+          {/* Scroll loading */}
+          {scrollLoading && <div>Loading more data...</div>}
+
+          {/* No More Data */}
+          {!hasMore && !initialLoading && (
+            <div>No more data available.</div>
           )}
-        </TableCell>
-      </TableRow>
-    </TableBody>
+        </>
+      )}
+    </div>
   );
 }
 
